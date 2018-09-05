@@ -9,6 +9,12 @@ def writeModule(object, defaultObj):
 def saveModule(file, string):
     pass
 
+def loadDict(configDict):
+    config = type('', (), {})()
+    for k,v in configDict.items():
+        setattr(config, k, v)
+    return config
+
 def loadModule(file, name='config'):
     if sys.version_info[0] == 3:
         import importlib.util
