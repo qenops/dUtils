@@ -9,6 +9,22 @@ def writeModule(object, defaultObj):
 def saveModule(file, string):
     pass
 
+def configDiff(orig, config):
+    # not going to look for removed items - that is not the point
+    diff = {}
+    for k,v in config.__dict__.items():
+        if not hasattr(orig, k) or getattr(orig,k) != v:
+            diff[k] = v
+    return diff
+
+def copyModule(old):
+    new = type(old)(old.__name__, old.__doc__)
+    new.__dict__.update(old.__dict__)
+    for k,v in new.__dict__.items():
+        if isinstance(v, dict):
+            new.__dict__[k] = copy.copy(v)
+    return new
+
 def loadDict(configDict):
     config = type('', (), {})()
     for k,v in configDict.items():
