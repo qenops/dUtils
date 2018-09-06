@@ -75,6 +75,17 @@ def getImageAlpha(imgName):
     scale = float(getBitDepthScaleFactor(img.dtype.name))
     img = np.float32(img)/scale
     return img
+
+# Convert image to single channel
+def toGray(image):
+    iy, ix, channels = image.shape if len(image.shape)>2 else [image.shape[0], image.shape[1], 1]
+    if channels == 4:
+        gray = cv2.cvtColor(image,cv2.COLOR_BGRA2GRAY)
+    elif channels == 3:  
+        gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+    else:
+        gray = image
+    return gray
     
 # Composite top image over bot image using top's alpha chanel (and bot's alpha chanel) optional
 def over(topC, topA, botC, botA=None, premultiply=True):
