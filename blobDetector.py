@@ -71,8 +71,8 @@ def tuneFunction(function, invert=True):
         frame = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         # inverse the image
         if invert:
-            frame2 = np.invert(frame)
-        ret,thresh = cv2.threshold(frame2,params.maxThreshold,255,cv2.THRESH_TRUNC)
+            frame = np.invert(frame)
+        ret,thresh = cv2.threshold(frame,params.maxThreshold,255,cv2.THRESH_TRUNC)
         
         # Detect blobs.
         keypoints = detector.detect(thresh)
