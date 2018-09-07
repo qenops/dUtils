@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import imageManip as duim
 
 def cv2CloseWindow(window):
     cv2.destroyWindow(window)
@@ -68,7 +69,7 @@ def tuneFunction(function, invert=True):
         params = update()
         detector = cv2.SimpleBlobDetector_create(params) 
         img = function()
-        frame = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        frame = duim.toGray(img)
         # inverse the image
         if invert:
             frame = np.invert(frame)
@@ -98,7 +99,7 @@ blob.blobDetectorParameterTune(img)
 
 def findBlobs(img, params, invert=True):
     detector = cv2.SimpleBlobDetector_create(params)
-    frame = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    frame = duim.toGray(img)
     if invert:
         frame = np.invert(frame)
     ret,thresh = cv2.threshold(frame,params.maxThreshold,255,cv2.THRESH_TRUNC)
