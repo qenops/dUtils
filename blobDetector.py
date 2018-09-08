@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-import imageManip as duim
+import dUtils.imageManip as duim
 
 def cv2CloseWindow(window):
     cv2.destroyWindow(window)

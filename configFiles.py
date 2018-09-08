@@ -2,6 +2,7 @@ __version__ = '0.1'
 __author__ = ('David Dunn')
 
 import sys, argparse
+import numpy as np
 
 def generateHeader():
     header = '#'*80
@@ -11,14 +12,26 @@ def generateHeader():
     return header
 
 def writeObject(obj, name):
+    output = '### loading %s ###\n'%name
     diff = obj
-    output = 'import %s\n'%obj.__class__.__module__
-    # I'm not doing anything about arguments, but we could use inspect.getargspec() if we wanted
-    output += '%s = %s.%s()\n'%(name, obj.__class__.__module__, obj.__class__.__name__) 
-    default = obj.__class__()
-    diff = objectDiff(obj, default)
-    for k in [i for i in diff.__dir__() if i[:2] != '__']:
-        output += '%s.%s = %s\n'%(name,k,getattr(obj,k))
+    output += 'import %s\n'%obj.__class__.__module__
+    try:
+        default = obj.__class__()
+        diff = objectDiff(obj, default)
+    except:  # we couldn't diff the object (it is complex), so just store it in a binary and load it in config file
+        np.savez(name,obj)      # I'm using numpy to save objects just because its easy - we could switch to pickle
+        output += '# load saved object\n'
+        output += 'import numpy as np\n'
+        output += '%s = np.load("%s.npz")["arr_0"].item()\n'%(name,name)
+    else:    
+        # I'm not doing anything about arguments because we din't fail to create default without args,
+        # but we could use inspect.getargspec() if we wanted to be more inclusive
+        output += '%s = %s.%s()\n'%(name, obj.__class__.__module__, obj.__class__.__name__) 
+        diff = [i for i in diff.__dir__() if i[:2] != '__']
+        diff.sort()
+        for k in diff:
+            output += '%s.%s = %s\n'%(name,k,getattr(obj,k))
+    output += '\n'
     return output
 
 def objectDiff(obj, other):
@@ -51,12 +64,15 @@ def loadDict(configDict):
         setattr(config, k, v)
     return config
 
-def saveModule(file, strings):
+def saveModule(file, strings, **kwargs):
     header = generateHeader()
     with open(file, 'w') as f:
         f.write(header)
         for s in strings:
             f.write(s)
+        f.write('### Simple parameters ###\n')
+        for k, v in kwargs.items():
+            f.write('%s = %s\n'%(k,v))
 
 def loadModule(file, name='config'):
     if sys.version_info[0] == 3:
