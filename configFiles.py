@@ -34,6 +34,12 @@ def writeObject(obj, name):
     output += '\n'
     return output
 
+def argsToAttr(**kwargs):
+    obj = type('', (), {})()
+    for k,v in kwargs:
+        setattr(obj, k, v)
+    return obj
+
 def objectDiff(obj, other):
     diff = type('', (), {})()
     for k in [i for i in obj.__dir__() if i[:2] != '__']:
