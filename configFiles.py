@@ -1,7 +1,7 @@
 __version__ = '0.1'
 __author__ = ('David Dunn')
 
-import sys, argparse
+import sys, argparse, os
 import numpy as np
 
 def generateHeader():
@@ -11,7 +11,7 @@ def generateHeader():
     header += '\n\n'
     return header
 
-def writeObject(obj, name):
+def writeObject(obj, name, path=None):
     output = '### loading %s ###\n'%name
     diff = obj
     output += 'import %s\n'%obj.__class__.__module__
@@ -19,10 +19,12 @@ def writeObject(obj, name):
         default = obj.__class__()
         diff = objectDiff(obj, default)
     except:  # we couldn't diff the object (it is complex), so just store it in a binary and load it in config file
-        np.savez(name,obj)      # I'm using numpy to save objects just because its easy - we could switch to pickle
+        if path is None:
+            path = '.'
+        np.savez(os.path.join(path,name),obj)      # I'm using numpy to save objects just because its easy - we could switch to pickle
         output += '# load saved object\n'
         output += 'import numpy as np\n'
-        output += '%s = np.load("%s.npz")["arr_0"].item()\n'%(name,name)
+        output += '%s = np.load("%s.npz")["arr_0"].item()\n'%(name,os.path.join(path,name))
     else:    
         # I'm not doing anything about arguments because we din't fail to create default without args,
         # but we could use inspect.getargspec() if we wanted to be more inclusive
