@@ -25,6 +25,8 @@ def writeObject(obj, name, path=None):
         output += '# load saved object\n'
         output += 'import numpy as np\n'
         output += '%s = np.load("%s.npz")["arr_0"].item()\n'%(name,os.path.join(path,name))
+        output += 'import copy\n'
+        output += '%s = copy.copy(%s)\n'%(name,name)
     else:    
         # I'm not doing anything about arguments because we din't fail to create default without args,
         # but we could use inspect.getargspec() if we wanted to be more inclusive
