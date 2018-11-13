@@ -1,7 +1,8 @@
 __version__ = '0.1'
 __author__ = ('David Dunn')
 
-import sys, argparse, os
+import sys, argparse, os, inspect
+from collections import OrderedDict
 import numpy as np
 
 def generateHeader():
@@ -15,8 +16,16 @@ def writeObject(obj, name, path=None):
     output = '### loading %s ###\n'%name
     diff = obj
     output += 'import %s\n'%obj.__class__.__module__
+    required = OrderedDict()
     try:
         default = obj.__class__()
+    except:  # it has some required args that we didn't pass - lets find those and pass them and remember to pass them when we create the object
+        sig = inspect.signature(obj.__class__)
+        for par in sig.parameters:
+            if sig.parameters[par].default == inspect.Parameter.empty:
+                required[par] = getattr(obj,par)
+        default = obj.__class__(**required)
+    try:
         diff = objectDiff(obj, default)
     except:  # we couldn't diff the object (it is complex), so just store it in a binary and load it in config file
         if path is None:
@@ -28,9 +37,7 @@ def writeObject(obj, name, path=None):
         output += 'import copy\n'
         output += '%s = copy.copy(%s)\n'%(name,name)
     else:    
-        # I'm not doing anything about arguments because we din't fail to create default without args,
-        # but we could use inspect.getargspec() if we wanted to be more inclusive
-        output += '%s = %s.%s()\n'%(name, obj.__class__.__module__, obj.__class__.__name__) 
+        output += '%s = %s.%s(%s)\n'%(name, obj.__class__.__module__, obj.__class__.__name__,', '.join("{!s}={!r}".format(key,val) for (key,val) in required.items())) 
         diff = [i for i in diff.__dir__() if i[:2] != '__']
         diff.sort()
         for k in diff:
@@ -49,6 +56,16 @@ def objectDiff(obj, other):
     for k in [i for i in obj.__dir__() if i[:2] != '__']:
         if not hasattr(other, k) or getattr(other,k) != getattr(obj,k):
             setattr(diff, k, getattr(obj,k))
+    return diff
+
+def dictDiff(obj, other):
+    diff = type('', (), {})()
+    for k,v in obj.items():
+        #print(k)
+        if isinstance(v,np.ndarray) and (not k in other or np.array_equal(other[k],v)):
+            setattr(diff, k, v)
+        elif not k in other or other[k] != v:
+            setattr(diff, k, v)
     return diff
 
 def configDiff(config, other):
@@ -80,9 +97,10 @@ def saveModule(file, strings, **kwargs):
         f.write(header)
         for s in strings:
             f.write(s)
-        f.write('### Simple parameters ###\n')
-        for k, v in kwargs.items():
-            f.write('%s = %s\n'%(k,v))
+        if kwargs:
+            f.write('### Simple parameters ###\n')
+            for k, v in kwargs.items():
+                f.write('%s = %s\n'%(k,v))
 
 def loadModule(file, name='config'):
     if sys.version_info[0] == 3:
