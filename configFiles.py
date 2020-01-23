@@ -15,11 +15,12 @@ def generateHeader():
 def writeObject(obj, name, path=None):
     output = '### loading %s ###\n'%name
     diff = obj
+    # want a case for config objects
     if obj.__class__.__module__ == __name__:
         diff = [i for i in obj.__dir__() if i[:2] != '__']
         diff.sort()
         for k in diff:
-            output += '%s = %s\n'%(k,getattr(obj,k))
+            output += '%s = %s\n'%(k,getattr(obj,k)) # TODO fix for string objects to output quotes - does repr work for everything?
         output += '\n'
     else:
         output += 'import %s\n'%obj.__class__.__module__
