@@ -15,34 +15,41 @@ def generateHeader():
 def writeObject(obj, name, path=None):
     output = '### loading %s ###\n'%name
     diff = obj
-    output += 'import %s\n'%obj.__class__.__module__
-    required = OrderedDict()
-    try:
-        default = obj.__class__()
-    except:  # it has some required args that we didn't pass - lets find those and pass them and remember to pass them when we create the object
-        sig = inspect.signature(obj.__class__)
-        for par in sig.parameters:
-            if sig.parameters[par].default == inspect.Parameter.empty:
-                required[par] = getattr(obj,par)
-        default = obj.__class__(**required)
-    try:
-        diff = objectDiff(obj, default)
-    except:  # we couldn't diff the object (it is complex), so just store it in a binary and load it in config file
-        if path is None:
-            path = '.'
-        np.savez(os.path.join(path,name),obj)      # I'm using numpy to save objects just because its easy - we could switch to pickle
-        output += '# load saved object\n'
-        output += 'import numpy as np\n'
-        output += '%s = np.load("%s.npz")["arr_0"].item()\n'%(name,os.path.join(path,name))
-        output += 'import copy\n'
-        output += '%s = copy.copy(%s)\n'%(name,name)
-    else:    
-        output += '%s = %s.%s(%s)\n'%(name, obj.__class__.__module__, obj.__class__.__name__,', '.join("{!s}={!r}".format(key,val) for (key,val) in required.items())) 
-        diff = [i for i in diff.__dir__() if i[:2] != '__']
+    if obj.__class__.__module__ == __name__:
+        diff = [i for i in obj.__dir__() if i[:2] != '__']
         diff.sort()
         for k in diff:
-            output += '%s.%s = %s\n'%(name,k,getattr(obj,k))
-    output += '\n'
+            output += '%s = %s\n'%(k,getattr(obj,k))
+        output += '\n'
+    else:
+        output += 'import %s\n'%obj.__class__.__module__
+        required = OrderedDict()
+        try:
+            default = obj.__class__()
+        except:  # it has some required args that we didn't pass - lets find those and pass them and remember to pass them when we create the object
+            sig = inspect.signature(obj.__class__)
+            for par in sig.parameters:
+                if sig.parameters[par].default == inspect.Parameter.empty:
+                    required[par] = getattr(obj,par)
+            default = obj.__class__(**required)
+        try:
+            diff = objectDiff(obj, default)
+        except:  # we couldn't diff the object (it is complex), so just store it in a binary and load it in config file
+            if path is None:
+                path = '.'
+            np.savez(os.path.join(path,name),obj)      # I'm using numpy to save objects just because its easy - we could switch to pickle
+            output += '# load saved object\n'
+            output += 'import numpy as np\n'
+            output += '%s = np.load("%s.npz")["arr_0"].item()\n'%(name,os.path.join(path,name))
+            output += 'import copy\n'
+            output += '%s = copy.copy(%s)\n'%(name,name)
+        else:    
+            output += '%s = %s.%s(%s)\n'%(name, obj.__class__.__module__, obj.__class__.__name__,', '.join("{!s}={!r}".format(key,val) for (key,val) in required.items())) 
+            diff = [i for i in diff.__dir__() if i[:2] != '__']
+            diff.sort()
+            for k in diff:
+                output += '%s.%s = %s\n'%(name,k,getattr(obj,k))
+        output += '\n'
     return output
 
 def argsToAttr(**kwargs):
