@@ -13,8 +13,8 @@ import numpy as np
 
 def strToImg(text, scale=1.0,thick=1,color=(255,255,255),backCol=(0,0,0)):
     shape, baseLine = cv2.getTextSize(text,cv2.FONT_HERSHEY_PLAIN,scale,int(scale*2.5))
-    img = np.zeros((shape[1]*2,shape[0]+1,3))
-    point = (0,shape[1])
+    img = np.zeros((shape[1]*2,shape[0]+1,3), dtype=np.uint8)
+    point = (0,int(shape[1]*1.5))
     drawStr(img,point,text,scale,thick,color,backCol)
     return img
 
@@ -106,12 +106,13 @@ def getCoC(aperture, focalDist, blurDist):
     return aperture * abs(blurDist - focalDist) / blurDist
 
 # Crop or exand (with one padding) the image to the given dimensions
-def cropImg(img, refDim):
-    size = img.shape[:2]
+def cropImg(img, refDim, black=True):
+    iy, ix, channels = img.shape if len(img.shape)>2 else [img.shape[0], img.shape[1], 1]
+    size = [iy,ix]
     if size[0] >= refDim[0] and size[1] >= refDim[1]:
         return img[round(size[0]/2)-round(refDim[0]/2):round(size[0]/2)+refDim[0]-round(refDim[0]/2),round(size[1]/2)-round(refDim[1]/2):round(size[1]/2)+refDim[1]-round(refDim[1]/2)]
     else:
-        toRet = np.ones([refDim[0],refDim[1],3], img.dtype.name)
+        toRet = np.zeros([refDim[0],refDim[1],channels], img.dtype.name) if black else np.ones([refDim[0],refDim[1],channels], img.dtype.name)
         xMin = min(refDim[0],size[0])
         yMin = min(refDim[1],size[1])
         xMinH = min(round(refDim[0]/2),round(size[0]/2))
