@@ -22,16 +22,24 @@ def cv2CloseWindow(window):
     cv2.waitKey(1)
     cv2.waitKey(1)
 
-def renderLoop():
+def renderLoop(step=1):
     start = time.time()
+    clock = time.time() - start
+    frame = strToImg(f'{clock:07.3f}', scale=8, thick=8)
+    blank = np.zeros_like(frame)
+    count = 0
     while(True):
-        clock = time.time() - start
-        frame = strToImg(f'{clock:07.3f}', scale=8, thick=8)
-        cv2.imshow('frame', frame)   # Display the frame
+        if count % step == 0:
+            clock = time.time() - start
+            frame = strToImg(f'{clock:07.3f}', scale=8, thick=8)
+            cv2.imshow('frame', frame)   # Display the frame
+        else:
+            cv2.imshow('frame', blank)   # Display a blank
         ch = cv2.waitKey(1) & 0xFF
         if ch == 27:                # escape
             break
+        count += 1
     cv2CloseWindow('frame')
 
 if __name__ == "__main__":
-    renderLoop()
+    renderLoop(step = 4)
